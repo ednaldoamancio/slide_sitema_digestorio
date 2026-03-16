@@ -2,584 +2,207 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Jornada Digestória - edhumanas</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciências: Corpo Humano e Saúde - edhumanas</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
     <style>
-        :root {
-            --bg-color: #0d0d0f;
-            --text-color: #ffffff;
-            --accent: #ff6b00; /* Laranja edhumanas */
-            --accent-hover: #ff8533;
-            --glass-bg: rgba(20, 20, 22, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.1);
-        }
+        :root { --bg-color: #f4f4f9; --text-color: #333; --card-bg: #ffffff; --primary: #ff007f; --secondary: #7f00ff; --accent: #009688; --correct: #00cc66; --incorrect: #ff3333; }
+        body.dark-mode { --bg-color: #121212; --text-color: #e0e0e0; --card-bg: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; transition: 0.3s; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 80px; }
+        .controls { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        button { background-color: var(--secondary); color: white; border: none; padding: 10px 20px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: 0.2s; }
+        button:hover { transform: scale(1.05); }
+        .btn-voltar { background-color: #555; }
+        .header-resumo { border-left: 5px solid var(--primary); padding-left: 15px; margin-bottom: 30px; }
+        .header-resumo h1 { margin: 0; color: var(--primary); }
+        .mapa-mental { background-color: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 30px; border: 2px dashed var(--accent); text-align: center; }
+        .mapa-mental h2 { color: var(--accent); margin-top: 0; }
+        .node-central { background: linear-gradient(135deg, var(--accent), #00695c); color: white; padding: 15px; border-radius: 10px; font-weight: bold; display: inline-block; margin-bottom: 20px; font-size: 1.2em; transition: 0.3s; }
+        
+        .botoes-slides { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 15px; }
+        .btn-slide-novo { background: linear-gradient(135deg, var(--primary), #cc0066); color: white; text-decoration: none; padding: 10px 20px; font-weight: bold; border-radius: 20px; font-size: 0.95em; transition: 0.3s; text-align: center; }
+        .btn-slide-novo:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(255, 0, 127, 0.4); }
 
-        .light-mode {
-            --bg-color: #f4f4f9;
-            --text-color: #1a1a1a;
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(0, 0, 0, 0.1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Nunito', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            overflow: hidden; /* Trava a tela para ser um App/Slide */
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        /* ================= BACKGROUNDS ANIMADOS ================= */
-        #bg-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
-            background: #000;
-        }
-
-        .bg-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            /* O segredo da responsividade nas imagens: cover! */
-            background-size: cover; 
-            background-position: center center;
-            transition: opacity 1s ease-in-out;
-            transform: scale(1.05); /* Inicia levemente ampliado */
-        }
-
-        .bg-slide.active {
-            opacity: 0.6; /* Deixa a imagem mais escura para o texto brilhar */
-            animation: kenBurns 20s infinite alternate ease-in-out;
-        }
-
-        .light-mode .bg-slide.active {
-            opacity: 0.3; /* Mais claro no modo diurno */
-        }
-
-        @keyframes kenBurns {
-            0% { transform: scale(1.05) translate(0, 0); }
-            100% { transform: scale(1.15) translate(-2%, 2%); }
-        }
-
-        /* ================= CAMADA DE CONTEÚDO (RESPONSIVA) ================= */
-        #content-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            pointer-events: none; /* Permite clicar nos botões apenas */
-        }
-
-        /* Cabeçalho */
-        header {
-            padding: 20px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: auto;
-        }
-
-        .brand {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--accent);
-            text-shadow: 0 0 15px rgba(255, 107, 0, 0.4);
-        }
-
-        .theme-btn {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            color: var(--text-color);
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(10px);
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        /* Área Central do Texto */
-        .slide-text-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start; /* Alinhado à esquerda no Desktop */
-            padding: 40px 10%;
-        }
-
-        .text-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            padding: 40px;
-            border-radius: 24px;
-            max-width: 600px;
-            pointer-events: auto;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            
-            /* Animação de entrada */
-            opacity: 0;
-            transform: translateX(-30px);
-            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-
-        .text-card.active {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .slide-tag {
-            color: var(--accent);
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-
-        .slide-title {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 3rem;
-            line-height: 1.1;
-            margin-bottom: 20px;
-        }
-
-        .slide-desc {
-            font-size: 1.3rem;
-            line-height: 1.6;
-            color: var(--text-color);
-            opacity: 0.9;
-        }
-
-        /* Área de Navegação */
-        .nav-area {
-            padding: 20px 10%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            pointer-events: auto;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-        }
-
-        .nav-btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3);
-            transition: 0.3s;
-        }
-
-        .nav-btn:disabled {
-            background: #555;
-            box-shadow: none;
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .nav-btn:hover:not(:disabled) {
-            transform: scale(1.1);
-            background: var(--accent-hover);
-        }
-
-        .progress-bar {
-            flex: 1;
-            margin: 0 30px;
-            height: 6px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--accent);
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
-        /* ================= QUIZ FINAL ================= */
-        #quiz-container {
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            padding: 20px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 20;
-            background: var(--bg-color);
-        }
-
-        .quiz-btn {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 2px solid var(--glass-border);
-            color: var(--text-color);
-            padding: 15px 20px;
-            margin-bottom: 12px;
-            border-radius: 16px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-align: left;
-            transition: 0.2s;
-        }
-
-        .quiz-btn:hover {
-            border-color: var(--accent);
-            background: rgba(255, 107, 0, 0.1);
-        }
-
-        /* ================= MEDIA QUERIES (RESPONSIVIDADE MÁXIMA) ================= */
-        /* Celulares em pé (Portrait) */
-        @media (max-width: 768px) {
-            .slide-text-container {
-                padding: 20px;
-                align-items: flex-end; /* Joga o texto mais para baixo no celular para ver a imagem */
-            }
-
-            .text-card {
-                width: 100%;
-                padding: 25px;
-                margin-bottom: 10px;
-            }
-
-            .slide-title {
-                font-size: 2.2rem;
-            }
-
-            .slide-desc {
-                font-size: 1.1rem;
-            }
-
-            .nav-area {
-                padding: 15px 20px;
-            }
-
-            .nav-btn {
-                width: 55px;
-                height: 55px;
-            }
-            
-            .brand {
-                font-size: 1.5rem;
-            }
-        }
+        .branches { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+        .branch { background-color: rgba(0, 150, 136, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid var(--accent); width: 30%; min-width: 200px; font-size: 0.95em; text-align: left;}
+        body.dark-mode .branch { background-color: rgba(0, 150, 136, 0.2); }
+        .card { background-color: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 20px; border-top: 4px solid var(--accent); }
+        .destaque { font-weight: bold; color: var(--accent); }
+        .quiz-section { margin-top: 40px; padding-top: 20px; border-top: 2px solid #ccc; }
+        .question-box { background-color: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .option-btn { width: 100%; text-align: left; background: transparent; color: var(--text-color); border: 2px solid var(--secondary); padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .option-btn:hover { background-color: rgba(127, 0, 255, 0.1); }
+        .option-btn:disabled { cursor: not-allowed; }
+        .option-btn.correct { background-color: var(--correct); color: white; border-color: var(--correct); }
+        .option-btn.incorrect { background-color: var(--incorrect); color: white; border-color: var(--incorrect); }
+        .feedback { margin-top: 10px; padding: 15px; border-radius: 5px; font-weight: bold; display: none; font-size: 0.95em; }
+        .feedback.success { background-color: rgba(0, 204, 102, 0.1); color: #00994d; border-left: 4px solid var(--correct); }
+        .feedback.error { background-color: rgba(255, 51, 51, 0.1); color: #cc0000; border-left: 4px solid var(--incorrect); }
+        body.dark-mode .feedback.success { color: #33ff99; }
+        body.dark-mode .feedback.error { color: #ff6666; }
+        .conclusao-btn { width: 100%; text-align: center; background-color: var(--correct); color: white; border: none; margin-top: 20px; padding: 15px; font-size: 1.2em; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .conclusao-btn:hover { background-color: #00994d; transform: scale(1.02); }
+        .nav-bottom { background: linear-gradient(135deg, #7f00ff, #ff007f); padding: 15px; text-align: center; position: fixed; bottom: 0; left: 0; width: 100%; z-index: 1000; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); }
+        .nav-bottom a { color: white; text-decoration: none; font-weight: bold; margin: 0 15px; font-size: 1.1em; }
     </style>
 </head>
-<body class="dark-mode">
+<body>
+    <div class="container">
+        <div class="controls">
+            <button class="btn-voltar" onclick="window.history.back()">⬅️ Voltar</button>
+            <button onclick="document.body.classList.toggle('dark-mode')">🌙 Tela Noturna</button>
+        </div>
 
-    <div id="bg-container"></div>
+        <div class="header-resumo">
+            <h1>A Máquina Humana 🧬💪</h1>
+            <p>Bora entender como seu corpo funciona, Híngrid! Essa matéria é sobre VOCÊ.</p>
+        </div>
 
-    <div id="content-layer">
-        <header>
-            <div class="brand">edhumanas</div>
-            <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
-        </header>
-
-        <div class="slide-text-container">
-            <div class="text-card" id="text-card">
-                <div class="slide-tag" id="slide-tag">Nível 1</div>
-                <h1 class="slide-title" id="slide-title">Hackeando o Sistema</h1>
-                <p class="slide-desc" id="slide-desc">Um tour 3D em tempo real pelo corpo humano.</p>
+        <div class="mapa-mental">
+            <h2>🧠 Mapa Mental: Corpo Humano e Saúde</h2>
+            <div class="node-central">Como a Máquina Funciona</div>
+            <div class="branches">
+                <div class="branch">
+                    <strong>Sistemas do Corpo:</strong><br>Digestório (comida vira energia), Respiratório (oxigênio pro sangue), Circulatório (sangue leva tudo pro corpo todo), Nervoso (o chefe que comanda tudo).
+                </div>
+                <div class="branch">
+                    <strong>Defesa do Corpo:</strong><br>Sistema Imunológico: seus soldados internos. Vacina treina o exército antes da guerra chegar.
+                </div>
+                <div class="branch">
+                    <strong>Saúde Pública:</strong><br>Saneamento básico, água tratada e vacinação são os pilares pra evitar epidemias.
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px dashed var(--accent);">
+                <p style="font-weight: bold; font-size: 1.1em; color: var(--text-color);">Quer se aprofundar de verdade? Confira a aula completa em slides! 👇</p>
+                <div class="botoes-slides">
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Sistemas do Corpo Humano</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Sistema Digestório</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Sistema Imunológico</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Sistema Respiratório</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Sistema Circulatório</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Sistema Nervoso</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Vacinas</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 Saneamento</a>
+                    <a href="https://edhumanasorgaoshumanos.manus.space/" target="_blank" class="btn-slide-novo" onclick="lancarConfete()">🚀 DSTs</a>
+                </div>
             </div>
         </div>
 
-        <div class="nav-area">
-            <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)">❮</button>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
+        <div class="card">
+            <h2>Papo Reto: Resumo da Matéria</h2>
+            <p>Seu corpo é tipo uma cidade inteira funcionando ao mesmo tempo. O <span class="destaque">sistema digestório</span> é a usina de energia: transforma a comida em nutrientes. O <span class="destaque">sistema respiratório</span> puxa o oxigênio do ar e joga fora o gás carbônico. E o <span class="destaque">sistema circulatório</span> é o Uber do corpo: o sangue leva oxigênio e nutrientes pra todas as células e ainda recolhe o lixo.</p>
+            <p>Agora, o mais importante pra prova: <span class="destaque">vacinação</span>. A vacina é tipo um simulado pro seu sistema imunológico. Ela coloca um pedacinho enfraquecido do vírus no corpo pra ele aprender a se defender ANTES de pegar a doença de verdade. Por isso o SUS faz campanhas de vacinação: é mais barato prevenir do que tratar. E saneamento básico (água tratada, esgoto) evita doenças como dengue, cólera e leptospirose.</p>
+        </div>
+
+        <div class="card">
+            <h2>Fique Ligado: DSTs e Prevenção 🛡️</h2>
+            <p>A prova adora cobrar sobre <span class="destaque">Infecções Sexualmente Transmissíveis (ISTs)</span>. HIV/AIDS, sífilis e HPV são as mais cobradas. O método mais eficaz de prevenção é a <span class="destaque">camisinha</span> (masculina ou feminina), que protege contra ISTs e gravidez ao mesmo tempo. Não caia na pegadinha: anticoncepcional previne gravidez, mas NÃO previne ISTs.</p>
+        </div>
+
+        <div class="quiz-section">
+            <h2>Autoavaliação: Testa seu conhecimento!</h2>
+            <div class="question-box" id="q1">
+                <p><strong>1. Qual é a principal função da vacinação no organismo humano?</strong></p>
+                <button class="option-btn" onclick="avaliar(1, false, this, 'Incorreto. A vacina não cura doença, ela PREVINE. Ela age antes da doença aparecer.')">A) Curar doenças que a pessoa já contraiu.</button>
+                <button class="option-btn" onclick="avaliar(1, true, this, 'Isso aí! A vacina ensina o corpo a se defender antes da doença chegar. É tipo um treino militar pro sistema imunológico.')">B) Estimular o sistema imunológico a produzir defesas contra doenças específicas.</button>
+                <button class="option-btn" onclick="avaliar(1, false, this, 'Incorreto. A vacina não mata vírus diretamente. Ela prepara o corpo pra ele mesmo fazer esse trabalho.')">C) Matar todos os vírus e bactérias presentes no corpo.</button>
+                <div class="feedback" id="feed-1"></div>
             </div>
-            <button class="nav-btn" id="btn-next" onclick="changeSlide(1)">❯</button>
+
+            <div class="question-box" id="q2">
+                <p><strong>2. Uma campanha do Ministério da Saúde diz: "Use camisinha. Previna-se." Por que a camisinha é considerada o método mais completo de prevenção?</strong></p>
+                <button class="option-btn" onclick="avaliar(2, false, this, 'Incorreto. A pílula previne gravidez, mas não protege contra ISTs como HIV e sífilis.')">A) Porque é a mesma coisa que tomar pílula anticoncepcional.</button>
+                <button class="option-btn" onclick="avaliar(2, false, this, 'Incorreto. A camisinha não é 100% contra gravidez sozinha, mas é o único método que protege contra ISTs.')">B) Porque é o único método que garante 100% de proteção contra gravidez.</button>
+                <button class="option-btn" onclick="avaliar(2, true, this, 'Exatamente! A camisinha é o único método que protege contra ISTs E gravidez ao mesmo tempo. Dupla proteção!')">C) Porque é o único método que protege contra Infecções Sexualmente Transmissíveis (ISTs) e gravidez simultaneamente.</button>
+                <div class="feedback" id="feed-2"></div>
+            </div>
+
+            <div class="question-box" id="q3">
+                <p><strong>3. Qual sistema do corpo humano é responsável por transportar oxigênio e nutrientes para todas as células?</strong></p>
+                <button class="option-btn" onclick="avaliar(3, false, this, 'Incorreto. O sistema digestório transforma a comida em nutrientes, mas quem TRANSPORTA é outro.')">A) Sistema Digestório.</button>
+                <button class="option-btn" onclick="avaliar(3, true, this, 'Mandou bem! O sangue, bombeado pelo coração, leva oxigênio e nutrientes pra cada cantinho do corpo.')">B) Sistema Circulatório.</button>
+                <button class="option-btn" onclick="avaliar(3, false, this, 'Incorreto. O respiratório cuida da troca de gases (oxigênio entra, gás carbônico sai), mas não transporta nutrientes.')">C) Sistema Respiratório.</button>
+                <div class="feedback" id="feed-3"></div>
+            </div>
+
+            <button class="conclusao-btn" id="btn-concluir" style="display:none;" onclick="salvarEvoltar()">✅ Finalizar e Salvar Nota</button>
         </div>
     </div>
 
-    <div id="quiz-container">
-        <div class="text-card active" style="width: 100%; max-width: 700px; text-align: center;">
-            <div class="slide-tag" id="quiz-counter">Desafio Final</div>
-            <h1 class="slide-title" id="quiz-question" style="font-size: 1.8rem; margin-bottom: 30px;">Carregando...</h1>
-            <div id="quiz-options"></div>
-            <div id="quiz-feedback" style="margin-top: 20px; font-weight: 800; font-size: 1.3rem; min-height: 30px;"></div>
-            <button id="quiz-next-btn" class="theme-btn" style="margin-top: 20px; display: none; width: 100%; background: var(--accent); color: white; border:none; padding: 15px;" onclick="nextQuestion()">Próximo ❯</button>
-        </div>
-    </div>
+    <nav class="nav-bottom">
+        <a href="index.html">🏠 Início</a>
+        <a href="cronograma.html">📅 Rotina</a>
+    </nav>
 
     <script>
-        // Conteúdo Desmontado: Cada slide tem sua imagem de fundo e seu texto em HTML
-        const contentData = [
-            { img: '01.jpg', tag: 'INÍCIO', title: 'Hackeando o Sistema Digestório', desc: 'Um tour 3D em tempo real. Você consegue gabaritar esse desafio?' },
-            { img: '02.jpg', tag: 'VISÃO GERAL', title: 'Uma Máquina em 3 Setores', desc: 'Canal Superior (linha de frente), Canal Inferior (extração) e Órgãos Acessórios (suportes químicos).' },
-            { img: '03.jpg', tag: 'A LARGADA', title: 'O start antes de engolir', desc: 'A mastigação tritura fisicamente, enquanto a amilase salivar começa a quebra química pesada dos carboidratos.' },
-            { img: '04.jpg', tag: 'TRANSPORTE', title: 'Empurrado ativamente', desc: 'O alimento não cai pela gravidade. Movimentos peristálticos rítmicos forçam a descida pelo esôfago.' },
-            { img: '05.jpg', tag: 'O TRITURADOR', title: 'Câmara de ácido implacável', desc: 'O estômago usa o Ácido Clorídrico para derrubar o pH e ativar enzimas que derretem as proteínas.' },
-            { img: '06.jpg', tag: 'SEGURANÇA', title: 'Válvula Anti-Bug', desc: 'A Cárdia impede que o ácido corrosivo retorne e queime o esôfago. Quando falha, sentimos a azia.' },
-            { img: '07.jpg', tag: 'EVOLUÇÃO', title: 'Metamorfose contínua', desc: 'A maçã vira Bolo Alimentar na boca, e se transforma em uma massa líquida e ácida chamada Quimo no estômago.' },
-            { img: '08.jpg', tag: 'CHEAT CODES', title: 'Inteligência Química', desc: 'O Quimo é ácido demais. Os órgãos anexos injetam fluidos para que o corpo consiga processá-lo.' },
-            { img: '09.jpg', tag: 'DETERGENTE NATURAL', title: 'A fábrica e o reservatório', desc: 'O fígado produz a Bile e a Vesícula Biliar a armazena, pronta para emulsificar (quebrar) as gorduras.' },
-            { img: '10.jpg', tag: 'SUPER-HERÓI', title: 'O motor de enzimas', desc: 'O Pâncreas regula o açúcar com a insulina e joga um suco poderoso no duodeno para finalizar a digestão.' },
-            // Substitua as próximas imagens conforme você gerar no seu software 3D
-            { img: '11.jpg', tag: 'ABSORÇÃO', title: 'O Labirinto Delgado', desc: 'Com vilosidades incríveis, é aqui que os nutrientes finalmente invadem a corrente sanguínea.' },
-            { img: '12.jpg', tag: 'RECICLAGEM', title: 'Resgate de Água', desc: 'O intestino grosso recupera a água e os minerais vitais, solidificando o que sobrou da operação.' },
-            { img: '13.jpg', tag: 'MICROBIOMA', title: 'Aliados Ocultos', desc: 'Trilhões de bactérias boas moram no intestino, ajudando a extrair vitaminas e proteger a fronteira.' },
-            { img: '14.jpg', tag: 'DESCARTE', title: 'Fim da Linha', desc: 'Os resíduos são compactados no reto aguardando a eliminação final do sistema.' },
-            { img: '15.jpg', tag: 'SUCESSO', title: 'Operação Concluída', desc: 'A máquina humana transformou matéria externa em energia pura para você existir. Pronto para o Quiz?' }
-        ];
+        let acertos = 0;
+        let respondidas = 0;
+        const totalQuestoes = 3;
 
-        const quizData = [
-            { q: 'Onde começa a digestão química dos carboidratos?', options: ['No estômago', 'Na boca', 'No intestino delgado', 'No esôfago'], ans: 1 },
-            { q: 'Qual movimento empurra o alimento pelo esôfago?', options: ['Movimentos de rotação', 'Gravidade', 'Movimentos peristálticos', 'Contrações gástricas'], ans: 2 },
-            { q: 'Qual ácido compõe o suco gástrico para digerir proteínas?', options: ['Ácido clorídrico', 'Ácido sulfúrico', 'Ácido cítrico', 'Ácido lático'], ans: 0 },
-            { q: 'Onde ocorre a maior parte da absorção de nutrientes?', options: ['Intestino grosso', 'Estômago', 'Fígado', 'Intestino delgado'], ans: 3 },
-            { q: 'Qual órgão produz a bile?', options: ['Fígado', 'Vesícula Biliar', 'Pâncreas', 'Estômago'], ans: 0 },
-            { q: 'A bile atua como um detergente natural. Qual sua função?', options: ['Digerir proteínas', 'Emulsificar gorduras', 'Absorver água', 'Produzir insulina'], ans: 1 },
-            { q: 'Qual órgão produz insulina e suco pancreático?', options: ['Fígado', 'Intestino delgado', 'Pâncreas', 'Vesícula biliar'], ans: 2 },
-            { q: 'Onde ocorre a reabsorção de água e formação das fezes?', options: ['Intestino grosso', 'Intestino delgado', 'Reto', 'Estômago'], ans: 0 },
-            { q: 'Qual o nome da massa alimentar após passar pelo estômago?', options: ['Bolo alimentar', 'Quimo', 'Quilo', 'Suco gástrico'], ans: 1 },
-            { q: 'Qual estrutura impede o refluxo ácido para o esôfago?', options: ['Cárdia', 'Piloro', 'Epiglote', 'Faringe'], ans: 0 }
-        ];
-
-        let currentIndex = 0;
-        let currentQuizIndex = 0;
-        let quizAnswered = false;
-
-        // INICIALIZAÇÃO DOS SLIDES
-        function initApp() {
-            const bgContainer = document.getElementById('bg-container');
-            
-            // Cria os fundos
-            contentData.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = `bg-slide ${index === 0 ? 'active' : ''}`;
-                div.style.backgroundImage = `url('${item.img}')`;
-                bgContainer.appendChild(div);
-            });
-
-            updateView();
-        }
-
-        function changeSlide(direction) {
-            const total = contentData.length;
-            
-            // Avança para o Quiz
-            if (currentIndex === total - 1 && direction > 0) {
-                startQuiz();
-                return;
-            }
-
-            currentIndex += direction;
-            
-            // Limites de segurança
-            if (currentIndex < 0) currentIndex = 0;
-            if (currentIndex >= total) currentIndex = total - 1;
-
-            updateView();
-        }
-
-        function updateView() {
-            const data = contentData[currentIndex];
-            const card = document.getElementById('text-card');
-            
-            // Animação de saída do texto
-            card.classList.remove('active');
-            
-            // Troca o background (crossfade)
-            document.querySelectorAll('.bg-slide').forEach((slide, idx) => {
-                slide.classList.toggle('active', idx === currentIndex);
-            });
-
-            // Atualiza os dados após um curtíssimo delay para a animação do texto
-            setTimeout(() => {
-                document.getElementById('slide-tag').textContent = `${currentIndex + 1} / ${contentData.length} — ${data.tag}`;
-                document.getElementById('slide-title').textContent = data.title;
-                document.getElementById('slide-desc').textContent = data.desc;
-                
-                // Animação de entrada
-                card.classList.add('active');
-            }, 300);
-
-            // Botões e Barra de Progresso
-            document.getElementById('btn-prev').disabled = currentIndex === 0;
-            
-            const fillWidth = ((currentIndex + 1) / contentData.length) * 100;
-            document.getElementById('progress-fill').style.width = `${fillWidth}%`;
-
-            const btnNext = document.getElementById('btn-next');
-            if (currentIndex === contentData.length - 1) {
-                btnNext.innerHTML = '🎮';
-                btnNext.style.backgroundColor = '#00e5ff';
-            } else {
-                btnNext.innerHTML = '❯';
-                btnNext.style.backgroundColor = 'var(--accent)';
-            }
-        }
-
-        // ================= QUIZ E FOGOS DE ARTIFÍCIO =================
-        function startQuiz() {
-            document.getElementById('content-layer').style.display = 'none';
-            document.getElementById('bg-container').style.filter = 'blur(10px)';
-            document.getElementById('bg-container').style.opacity = '0.3';
-            
-            const quizContainer = document.getElementById('quiz-container');
-            quizContainer.style.display = 'flex';
-            
-            loadQuestion();
-        }
-
-        function loadQuestion() {
-            quizAnswered = false;
-            const q = quizData[currentQuizIndex];
-            
-            document.getElementById('quiz-counter').textContent = `Desafio ${currentQuizIndex + 1} de ${quizData.length}`;
-            document.getElementById('quiz-question').textContent = q.q;
-            document.getElementById('quiz-feedback').textContent = '';
-            document.getElementById('quiz-next-btn').style.display = 'none';
-            
-            const optionsDiv = document.getElementById('quiz-options');
-            optionsDiv.innerHTML = '';
-            
-            q.options.forEach((opt, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'quiz-btn';
-                btn.innerHTML = `<strong>${['A', 'B', 'C', 'D'][i]}</strong> - ${opt}`;
-                btn.onclick = () => handleAnswer(i, btn);
-                optionsDiv.appendChild(btn);
+        // Função mágica dos confetes! 🎉
+        function lancarConfete() {
+            confetti({
+                particleCount: 150,
+                spread: 80,
+                origin: { y: 0.6 },
+                colors: ['#ff007f', '#7f00ff', '#009688', '#00cc66']
             });
         }
 
-        function handleAnswer(index, btnElement) {
-            if (quizAnswered) return;
-            quizAnswered = true;
+        function avaliar(qId, isCerto, btnClicado, explicacao) {
+            const botoes = document.querySelectorAll(`#q${qId} .option-btn`);
+            botoes.forEach(b => b.disabled = true);
+            
+            const feedback = document.getElementById(`feed-${qId}`);
+            feedback.style.display = 'block';
+            feedback.innerHTML = explicacao;
 
-            const q = quizData[currentQuizIndex];
-            const feedback = document.getElementById('quiz-feedback');
-
-            if (index === q.ans) {
-                feedback.textContent = 'BOOM! Sistema Hackeado! 🔓';
-                feedback.style.color = '#00e5ff';
-                btnElement.style.borderColor = '#00e5ff';
-                btnElement.style.background = 'rgba(0, 229, 255, 0.2)';
-                explosaoFestiva(false);
+            if (isCerto) {
+                btnClicado.classList.add('correct');
+                feedback.className = 'feedback success';
+                acertos++;
             } else {
-                feedback.textContent = 'Acesso Negado... ❌';
-                feedback.style.color = '#ff4444';
-                btnElement.style.borderColor = '#ff4444';
-                btnElement.style.background = 'rgba(255, 68, 68, 0.2)';
-                
-                // Destaca a correta
-                const btns = document.querySelectorAll('.quiz-btn');
-                btns[q.ans].style.borderColor = '#00e5ff';
-                btns[q.ans].style.color = '#00e5ff';
-            }
-
-            const nextBtn = document.getElementById('quiz-next-btn');
-            nextBtn.style.display = 'block';
-            if (currentQuizIndex === quizData.length - 1) {
-                nextBtn.textContent = 'Ver Relatório Final';
-            }
-        }
-
-        function nextQuestion() {
-            if (currentQuizIndex < quizData.length - 1) {
-                currentQuizIndex++;
-                loadQuestion();
-            } else {
-                // Fim
-                document.getElementById('quiz-counter').textContent = 'FIM DE JOGO';
-                document.getElementById('quiz-question').textContent = 'Você domina a biologia!';
-                document.getElementById('quiz-options').innerHTML = '';
-                document.getElementById('quiz-feedback').textContent = '';
-                document.getElementById('quiz-next-btn').style.display = 'none';
-                explosaoFestiva(true);
-            }
-        }
-
-        // Criando as pequenas explosões de faíscas como fogos!
-        function explosaoFestiva(grandFinale = false) {
-            const duration = grandFinale ? 6000 : 1500;
-            const end = Date.now() + duration;
-
-            (function frame() {
-                // Lança faíscas da esquerda e direita como fogos de artifício
-                confetti({
-                    particleCount: grandFinale ? 5 : 3,
-                    angle: 60,
-                    spread: 55,
-                    origin: { x: 0, y: 0.8 },
-                    colors: ['#ff6b00', '#ffae00', '#ffffff', '#ff3300'],
-                    shapes: ['circle'],
-                    gravity: 1.5,
-                    scalar: 0.8,
-                    ticks: 200
+                btnClicado.classList.add('incorrect');
+                feedback.className = 'feedback error';
+                botoes.forEach(b => {
+                    if(b.getAttribute('onclick').includes('true')) {
+                        b.style.border = '2px solid var(--correct)'; 
+                        b.style.color = 'var(--correct)';
+                    }
                 });
-                confetti({
-                    particleCount: grandFinale ? 5 : 3,
-                    angle: 120,
-                    spread: 55,
-                    origin: { x: 1, y: 0.8 },
-                    colors: ['#00e5ff', '#ffffff', '#0099ff'],
-                    shapes: ['circle'],
-                    gravity: 1.5,
-                    scalar: 0.8,
-                    ticks: 200
-                });
+            }
 
-                if (Date.now() < end) {
-                    requestAnimationFrame(frame);
+            respondidas++;
+            
+            if (respondidas === totalQuestoes) {
+                document.getElementById('btn-concluir').style.display = 'block';
+                window.scrollBy({ top: 100, behavior: 'smooth' });
+                
+                // Dispara confetes se a pessoa acertar todas!
+                if(acertos === totalQuestoes) {
+                    setTimeout(lancarConfete, 500);
                 }
-            }());
-        }
-
-        // Modo Noturno / Claro
-        function toggleTheme() {
-            document.body.classList.toggle('light-mode');
-            const btn = document.getElementById('theme-btn');
-            if (document.body.classList.contains('light-mode')) {
-                btn.textContent = '☀️';
-            } else {
-                btn.textContent = '🌙';
             }
         }
 
-        // Dá o play
-        window.onload = initApp;
+        function salvarEvoltar() {
+            let notaAtual = (acertos / totalQuestoes) * 10;
+            let notaAntiga = localStorage.getItem('edhumanas_nota_ciencias1') || 0;
+            
+            if (notaAtual > notaAntiga) { 
+                localStorage.setItem('edhumanas_nota_ciencias1', notaAtual); 
+            }
+            
+            localStorage.setItem('edhumanas_status_ciencias1', 'concluido');
+            lancarConfete(); // Mais confetes ao salvar!
+            
+            setTimeout(() => {
+                alert('Você acertou ' + acertos + ' de ' + totalQuestoes + ' questões. Nota salva!');
+                window.location.href = 'index.html';
+            }, 800);
+        }
     </script>
 </body>
 </html>

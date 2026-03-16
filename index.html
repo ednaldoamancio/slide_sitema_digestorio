@@ -2,24 +2,30 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hackeando o Sistema Digestório - edhumanas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jornada Digestória - edhumanas</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         :root {
-            --bg-color: #121214;
+            --bg-color: #0d0d0f;
             --text-color: #ffffff;
-            --panel-bg: rgba(30, 30, 32, 0.95);
-            --btn-bg: #ff6b00; /* Laranja vibrante combinando com as imagens */
-            --btn-text: #ffffff;
-            --btn-hover: #ff8533;
-            --accent: #00e5ff;
+            --accent: #ff6b00; /* Laranja edhumanas */
+            --accent-hover: #ff8533;
+            --glass-bg: rgba(20, 20, 22, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        .light-mode {
+            --bg-color: #f4f4f9;
+            --text-color: #1a1a1a;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -27,431 +33,553 @@
             margin: 0;
             padding: 0;
             font-family: 'Nunito', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            overflow: hidden; /* Trava a tela para ser um App/Slide */
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Container de Slides */
-        #slider-container {
+        /* ================= BACKGROUNDS ANIMADOS ================= */
+        #bg-container {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             z-index: 1;
-            transition: opacity 0.5s;
-            background-color: #000; /* Fundo preto para destacar as bordas das imagens */
+            background: #000;
         }
 
-        .slide {
+        .bg-slide {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             opacity: 0;
-            background-size: contain; /* Garante que a imagem inteira apareça sem cortar */
-            background-position: center;
-            background-repeat: no-repeat;
-            transition: opacity 0.6s ease-in-out;
+            /* O segredo da responsividade nas imagens: cover! */
+            background-size: cover; 
+            background-position: center center;
+            transition: opacity 1s ease-in-out;
+            transform: scale(1.05); /* Inicia levemente ampliado */
         }
 
-        .slide.active {
-            opacity: 1;
+        .bg-slide.active {
+            opacity: 0.6; /* Deixa a imagem mais escura para o texto brilhar */
+            animation: kenBurns 20s infinite alternate ease-in-out;
         }
 
-        /* Container do Quiz */
-        #quiz-container {
+        .light-mode .bg-slide.active {
+            opacity: 0.3; /* Mais claro no modo diurno */
+        }
+
+        @keyframes kenBurns {
+            0% { transform: scale(1.05) translate(0, 0); }
+            100% { transform: scale(1.15) translate(-2%, 2%); }
+        }
+
+        /* ================= CAMADA DE CONTEÚDO (RESPONSIVA) ================= */
+        #content-layer {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 5;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at center, #2a2a2e 0%, #121214 100%);
-        }
-
-        .quiz-panel {
-            background: var(--panel-bg);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            padding: 3rem;
-            border-radius: 24px;
-            max-width: 800px;
-            width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-            text-align: center;
-            transform: translateY(20px);
-            animation: slideUp 0.6s forwards ease-out;
-        }
-
-        @keyframes slideUp {
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .quiz-panel h2 {
-            font-family: 'Fredoka', sans-serif;
-            font-size: 2.5rem;
-            color: var(--btn-bg);
-            margin-bottom: 0.5rem;
-        }
-
-        .quiz-progress {
-            font-size: 1.1rem;
-            color: #aaa;
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 700;
-        }
-
-        .quiz-question {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            line-height: 1.4;
-        }
-
-        .quiz-options {
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            pointer-events: none; /* Permite clicar nos botões apenas */
         }
 
-        .quiz-btn {
-            background: rgba(255,255,255,0.05);
-            border: 2px solid rgba(255,255,255,0.15);
-            color: var(--text-color);
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: left;
-            padding-left: 24px;
-        }
-
-        .quiz-btn:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--btn-bg);
-            transform: translateX(8px);
-        }
-
-        .quiz-feedback {
-            margin-top: 1.5rem;
-            font-weight: bold;
-            font-size: 1.4rem;
-            min-height: 35px;
-            font-family: 'Fredoka', sans-serif;
-        }
-
-        /* Controles Inferiores */
-        #nav-ui {
-            position: absolute;
-            bottom: 30px;
-            left: 0;
-            width: 100%;
-            z-index: 10;
+        /* Cabeçalho */
+        header {
+            padding: 20px 30px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            gap: 20px;
-            pointer-events: none; /* Para não bloquear cliques na imagem */
-        }
-
-        .nav-btn {
-            background: var(--btn-bg);
-            color: white;
-            border: none;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            font-size: 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
             pointer-events: auto;
-            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
-            transition: all 0.3s;
         }
 
-        .nav-btn:hover {
-            background: var(--btn-hover);
-            transform: scale(1.1);
-        }
-
-        .nav-btn:disabled {
-            background: #444;
-            color: #777;
-            box-shadow: none;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .progress-pill {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            padding: 10px 25px;
-            border-radius: 30px;
-            font-size: 1.2rem;
-            font-family: 'Fredoka', sans-serif;
-            font-weight: 600;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .logo-top {
-            position: absolute;
-            top: 20px;
-            left: 30px;
-            z-index: 10;
+        .brand {
             font-family: 'Fredoka', sans-serif;
             font-size: 1.8rem;
             font-weight: 700;
             color: var(--accent);
-            text-shadow: 0 2px 10px rgba(0,229,255,0.4);
+            text-shadow: 0 0 15px rgba(255, 107, 0, 0.4);
+        }
+
+        .theme-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        /* Área Central do Texto */
+        .slide-text-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Alinhado à esquerda no Desktop */
+            padding: 40px 10%;
+        }
+
+        .text-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            padding: 40px;
+            border-radius: 24px;
+            max-width: 600px;
+            pointer-events: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            
+            /* Animação de entrada */
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .text-card.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .slide-tag {
+            color: var(--accent);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .slide-title {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 3rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        .slide-desc {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+
+        /* Área de Navegação */
+        .nav-area {
+            padding: 20px 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        }
+
+        .nav-btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 20px rgba(255, 107, 0, 0.3);
+            transition: 0.3s;
+        }
+
+        .nav-btn:disabled {
+            background: #555;
+            box-shadow: none;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            background: var(--accent-hover);
+        }
+
+        .progress-bar {
+            flex: 1;
+            margin: 0 30px;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* ================= QUIZ FINAL ================= */
+        #quiz-container {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            padding: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 20;
+            background: var(--bg-color);
+        }
+
+        .quiz-btn {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid var(--glass-border);
+            color: var(--text-color);
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s;
+        }
+
+        .quiz-btn:hover {
+            border-color: var(--accent);
+            background: rgba(255, 107, 0, 0.1);
+        }
+
+        /* ================= MEDIA QUERIES (RESPONSIVIDADE MÁXIMA) ================= */
+        /* Celulares em pé (Portrait) */
+        @media (max-width: 768px) {
+            .slide-text-container {
+                padding: 20px;
+                align-items: flex-end; /* Joga o texto mais para baixo no celular para ver a imagem */
+            }
+
+            .text-card {
+                width: 100%;
+                padding: 25px;
+                margin-bottom: 10px;
+            }
+
+            .slide-title {
+                font-size: 2.2rem;
+            }
+
+            .slide-desc {
+                font-size: 1.1rem;
+            }
+
+            .nav-area {
+                padding: 15px 20px;
+            }
+
+            .nav-btn {
+                width: 55px;
+                height: 55px;
+            }
+            
+            .brand {
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
-<body>
+<body class="dark-mode">
 
-    <div class="logo-top">edhumanas</div>
+    <div id="bg-container"></div>
 
-    <div id="slider-container"></div>
+    <div id="content-layer">
+        <header>
+            <div class="brand">edhumanas</div>
+            <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+        </header>
 
-    <div id="quiz-container">
-        <div class="quiz-panel">
-            <h2>Desafio Final!</h2>
-            <div class="quiz-progress" id="quizProgress">Pergunta 1 de 10</div>
-            <div class="quiz-question" id="quizQuestion">Carregando...</div>
-            <div class="quiz-options" id="quizOptions"></div>
-            <div class="quiz-feedback" id="quizFeedback"></div>
-            
-            <button id="nextQuizBtn" class="nav-btn" style="margin: 20px auto 0; width: auto; padding: 0 30px; border-radius: 30px; font-size: 1.2rem; display: none;" onclick="nextQuizQuestion()">Próxima Pergunta ❯</button>
+        <div class="slide-text-container">
+            <div class="text-card" id="text-card">
+                <div class="slide-tag" id="slide-tag">Nível 1</div>
+                <h1 class="slide-title" id="slide-title">Hackeando o Sistema</h1>
+                <p class="slide-desc" id="slide-desc">Um tour 3D em tempo real pelo corpo humano.</p>
+            </div>
+        </div>
+
+        <div class="nav-area">
+            <button class="nav-btn" id="btn-prev" onclick="changeSlide(-1)">❮</button>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <button class="nav-btn" id="btn-next" onclick="changeSlide(1)">❯</button>
         </div>
     </div>
 
-    <div id="nav-ui">
-        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">❮</button>
-        <div class="progress-pill" id="slideProgressText">Iniciando...</div>
-        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">❯</button>
+    <div id="quiz-container">
+        <div class="text-card active" style="width: 100%; max-width: 700px; text-align: center;">
+            <div class="slide-tag" id="quiz-counter">Desafio Final</div>
+            <h1 class="slide-title" id="quiz-question" style="font-size: 1.8rem; margin-bottom: 30px;">Carregando...</h1>
+            <div id="quiz-options"></div>
+            <div id="quiz-feedback" style="margin-top: 20px; font-weight: 800; font-size: 1.3rem; min-height: 30px;"></div>
+            <button id="quiz-next-btn" class="theme-btn" style="margin-top: 20px; display: none; width: 100%; background: var(--accent); color: white; border:none; padding: 15px;" onclick="nextQuestion()">Próximo ❯</button>
+        </div>
     </div>
 
     <script>
-        // Array com as 15 imagens do seu projeto
-        const images = [
-            '01.jpg', '02.jpg', '03.jpg', '04.jpg', '05.jpg', 
-            '06.jpg', '07.jpg', '08.jpg', '09.jpg', '10.jpg',
-            '11.jpg', '12.jpg', '13.jpg', '14.jpg', '15.jpg'
+        // Conteúdo Desmontado: Cada slide tem sua imagem de fundo e seu texto em HTML
+        const contentData = [
+            { img: '01.jpg', tag: 'INÍCIO', title: 'Hackeando o Sistema Digestório', desc: 'Um tour 3D em tempo real. Você consegue gabaritar esse desafio?' },
+            { img: '02.jpg', tag: 'VISÃO GERAL', title: 'Uma Máquina em 3 Setores', desc: 'Canal Superior (linha de frente), Canal Inferior (extração) e Órgãos Acessórios (suportes químicos).' },
+            { img: '03.jpg', tag: 'A LARGADA', title: 'O start antes de engolir', desc: 'A mastigação tritura fisicamente, enquanto a amilase salivar começa a quebra química pesada dos carboidratos.' },
+            { img: '04.jpg', tag: 'TRANSPORTE', title: 'Empurrado ativamente', desc: 'O alimento não cai pela gravidade. Movimentos peristálticos rítmicos forçam a descida pelo esôfago.' },
+            { img: '05.jpg', tag: 'O TRITURADOR', title: 'Câmara de ácido implacável', desc: 'O estômago usa o Ácido Clorídrico para derrubar o pH e ativar enzimas que derretem as proteínas.' },
+            { img: '06.jpg', tag: 'SEGURANÇA', title: 'Válvula Anti-Bug', desc: 'A Cárdia impede que o ácido corrosivo retorne e queime o esôfago. Quando falha, sentimos a azia.' },
+            { img: '07.jpg', tag: 'EVOLUÇÃO', title: 'Metamorfose contínua', desc: 'A maçã vira Bolo Alimentar na boca, e se transforma em uma massa líquida e ácida chamada Quimo no estômago.' },
+            { img: '08.jpg', tag: 'CHEAT CODES', title: 'Inteligência Química', desc: 'O Quimo é ácido demais. Os órgãos anexos injetam fluidos para que o corpo consiga processá-lo.' },
+            { img: '09.jpg', tag: 'DETERGENTE NATURAL', title: 'A fábrica e o reservatório', desc: 'O fígado produz a Bile e a Vesícula Biliar a armazena, pronta para emulsificar (quebrar) as gorduras.' },
+            { img: '10.jpg', tag: 'SUPER-HERÓI', title: 'O motor de enzimas', desc: 'O Pâncreas regula o açúcar com a insulina e joga um suco poderoso no duodeno para finalizar a digestão.' },
+            // Substitua as próximas imagens conforme você gerar no seu software 3D
+            { img: '11.jpg', tag: 'ABSORÇÃO', title: 'O Labirinto Delgado', desc: 'Com vilosidades incríveis, é aqui que os nutrientes finalmente invadem a corrente sanguínea.' },
+            { img: '12.jpg', tag: 'RECICLAGEM', title: 'Resgate de Água', desc: 'O intestino grosso recupera a água e os minerais vitais, solidificando o que sobrou da operação.' },
+            { img: '13.jpg', tag: 'MICROBIOMA', title: 'Aliados Ocultos', desc: 'Trilhões de bactérias boas moram no intestino, ajudando a extrair vitaminas e proteger a fronteira.' },
+            { img: '14.jpg', tag: 'DESCARTE', title: 'Fim da Linha', desc: 'Os resíduos são compactados no reto aguardando a eliminação final do sistema.' },
+            { img: '15.jpg', tag: 'SUCESSO', title: 'Operação Concluída', desc: 'A máquina humana transformou matéria externa em energia pura para você existir. Pronto para o Quiz?' }
         ];
 
-        // As 10 perguntas extraídas do seu material em texto
         const quizData = [
             { q: 'Onde começa a digestão química dos carboidratos?', options: ['No estômago', 'Na boca', 'No intestino delgado', 'No esôfago'], ans: 1 },
             { q: 'Qual movimento empurra o alimento pelo esôfago?', options: ['Movimentos de rotação', 'Gravidade', 'Movimentos peristálticos', 'Contrações gástricas'], ans: 2 },
             { q: 'Qual ácido compõe o suco gástrico para digerir proteínas?', options: ['Ácido clorídrico', 'Ácido sulfúrico', 'Ácido cítrico', 'Ácido lático'], ans: 0 },
-            { q: 'Onde ocorre a maior parte da absorção de nutrientes da nossa alimentação?', options: ['Intestino grosso', 'Estômago', 'Fígado', 'Intestino delgado'], ans: 3 },
+            { q: 'Onde ocorre a maior parte da absorção de nutrientes?', options: ['Intestino grosso', 'Estômago', 'Fígado', 'Intestino delgado'], ans: 3 },
             { q: 'Qual órgão produz a bile?', options: ['Fígado', 'Vesícula Biliar', 'Pâncreas', 'Estômago'], ans: 0 },
-            { q: 'A bile atua como um detergente natural. Qual sua função principal?', options: ['Digerir proteínas', 'Emulsificar gorduras', 'Absorver água', 'Produzir insulina'], ans: 1 },
+            { q: 'A bile atua como um detergente natural. Qual sua função?', options: ['Digerir proteínas', 'Emulsificar gorduras', 'Absorver água', 'Produzir insulina'], ans: 1 },
             { q: 'Qual órgão produz insulina e suco pancreático?', options: ['Fígado', 'Intestino delgado', 'Pâncreas', 'Vesícula biliar'], ans: 2 },
             { q: 'Onde ocorre a reabsorção de água e formação das fezes?', options: ['Intestino grosso', 'Intestino delgado', 'Reto', 'Estômago'], ans: 0 },
             { q: 'Qual o nome da massa alimentar após passar pelo estômago?', options: ['Bolo alimentar', 'Quimo', 'Quilo', 'Suco gástrico'], ans: 1 },
-            { q: 'Qual estrutura impede o refluxo de substâncias do estômago para o esôfago?', options: ['Cárdia', 'Piloro', 'Epiglote', 'Faringe'], ans: 0 }
+            { q: 'Qual estrutura impede o refluxo ácido para o esôfago?', options: ['Cárdia', 'Piloro', 'Epiglote', 'Faringe'], ans: 0 }
         ];
 
-        let currentSlide = 0;
-        let currentQuiz = 0;
-        let inQuizMode = false;
+        let currentIndex = 0;
+        let currentQuizIndex = 0;
         let quizAnswered = false;
 
-        // Inicializa o Slider injetando as 15 imagens
-        function initSlides() {
-            const container = document.getElementById('slider-container');
-            images.forEach((img, index) => {
+        // INICIALIZAÇÃO DOS SLIDES
+        function initApp() {
+            const bgContainer = document.getElementById('bg-container');
+            
+            // Cria os fundos
+            contentData.forEach((item, index) => {
                 const div = document.createElement('div');
-                div.className = `slide ${index === 0 ? 'active' : ''}`;
-                div.style.backgroundImage = `url('${img}')`;
-                container.appendChild(div);
+                div.className = `bg-slide ${index === 0 ? 'active' : ''}`;
+                div.style.backgroundImage = `url('${item.img}')`;
+                bgContainer.appendChild(div);
             });
-            updateSlideUI();
+
+            updateView();
         }
 
-        // Atualiza a interface dos slides
-        function updateSlideUI() {
-            document.querySelectorAll('.slide').forEach((el, index) => {
-                el.classList.toggle('active', index === currentSlide);
-            });
-
-            document.getElementById('prevBtn').disabled = currentSlide === 0;
+        function changeSlide(direction) {
+            const total = contentData.length;
             
-            const progress = document.getElementById('slideProgressText');
-            if (currentSlide < images.length) {
-                progress.textContent = `Nível ${currentSlide + 1} de ${images.length}`;
-                
-                // Muda o ícone do botão "Próximo" no último slide para indicar o Quiz
-                if(currentSlide === images.length - 1) {
-                    document.getElementById('nextBtn').innerHTML = '🎮';
-                    document.getElementById('nextBtn').title = 'Iniciar Quiz';
-                } else {
-                    document.getElementById('nextBtn').innerHTML = '❯';
-                    document.getElementById('nextBtn').title = 'Próximo';
-                }
-            }
-        }
-
-        function nextSlide() {
-            if (currentSlide < images.length - 1) {
-                currentSlide++;
-                updateSlideUI();
-            } else {
+            // Avança para o Quiz
+            if (currentIndex === total - 1 && direction > 0) {
                 startQuiz();
+                return;
             }
-        }
 
-        function prevSlide() {
-            if (currentSlide > 0) {
-                currentSlide--;
-                updateSlideUI();
-            }
-        }
-
-        // --- LÓGICA DO QUIZ ---
-        function startQuiz() {
-            inQuizMode = true;
-            document.getElementById('slider-container').style.opacity = '0';
-            document.getElementById('nav-ui').style.display = 'none';
+            currentIndex += direction;
             
+            // Limites de segurança
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex >= total) currentIndex = total - 1;
+
+            updateView();
+        }
+
+        function updateView() {
+            const data = contentData[currentIndex];
+            const card = document.getElementById('text-card');
+            
+            // Animação de saída do texto
+            card.classList.remove('active');
+            
+            // Troca o background (crossfade)
+            document.querySelectorAll('.bg-slide').forEach((slide, idx) => {
+                slide.classList.toggle('active', idx === currentIndex);
+            });
+
+            // Atualiza os dados após um curtíssimo delay para a animação do texto
             setTimeout(() => {
-                document.getElementById('slider-container').style.display = 'none';
-                document.getElementById('quiz-container').style.display = 'flex';
-                loadQuizQuestion();
-            }, 500);
+                document.getElementById('slide-tag').textContent = `${currentIndex + 1} / ${contentData.length} — ${data.tag}`;
+                document.getElementById('slide-title').textContent = data.title;
+                document.getElementById('slide-desc').textContent = data.desc;
+                
+                // Animação de entrada
+                card.classList.add('active');
+            }, 300);
+
+            // Botões e Barra de Progresso
+            document.getElementById('btn-prev').disabled = currentIndex === 0;
+            
+            const fillWidth = ((currentIndex + 1) / contentData.length) * 100;
+            document.getElementById('progress-fill').style.width = `${fillWidth}%`;
+
+            const btnNext = document.getElementById('btn-next');
+            if (currentIndex === contentData.length - 1) {
+                btnNext.innerHTML = '🎮';
+                btnNext.style.backgroundColor = '#00e5ff';
+            } else {
+                btnNext.innerHTML = '❯';
+                btnNext.style.backgroundColor = 'var(--accent)';
+            }
         }
 
-        function loadQuizQuestion() {
+        // ================= QUIZ E FOGOS DE ARTIFÍCIO =================
+        function startQuiz() {
+            document.getElementById('content-layer').style.display = 'none';
+            document.getElementById('bg-container').style.filter = 'blur(10px)';
+            document.getElementById('bg-container').style.opacity = '0.3';
+            
+            const quizContainer = document.getElementById('quiz-container');
+            quizContainer.style.display = 'flex';
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
             quizAnswered = false;
-            const qData = quizData[currentQuiz];
+            const q = quizData[currentQuizIndex];
             
-            document.getElementById('quizProgress').textContent = `Pergunta ${currentQuiz + 1} de ${quizData.length}`;
-            document.getElementById('quizQuestion').textContent = qData.q;
-            document.getElementById('quizFeedback').textContent = '';
-            document.getElementById('nextQuizBtn').style.display = 'none';
+            document.getElementById('quiz-counter').textContent = `Desafio ${currentQuizIndex + 1} de ${quizData.length}`;
+            document.getElementById('quiz-question').textContent = q.q;
+            document.getElementById('quiz-feedback').textContent = '';
+            document.getElementById('quiz-next-btn').style.display = 'none';
             
-            const optionsDiv = document.getElementById('quizOptions');
+            const optionsDiv = document.getElementById('quiz-options');
             optionsDiv.innerHTML = '';
             
-            qData.options.forEach((opt, index) => {
+            q.options.forEach((opt, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'quiz-btn';
-                btn.textContent = `${['A', 'B', 'C', 'D'][index]}) ${opt}`;
-                btn.onclick = () => checkAnswer(index, btn);
+                btn.innerHTML = `<strong>${['A', 'B', 'C', 'D'][i]}</strong> - ${opt}`;
+                btn.onclick = () => handleAnswer(i, btn);
                 optionsDiv.appendChild(btn);
             });
         }
 
-        function checkAnswer(selectedIndex, btnElement) {
+        function handleAnswer(index, btnElement) {
             if (quizAnswered) return;
             quizAnswered = true;
 
-            const qData = quizData[currentQuiz];
-            const feedback = document.getElementById('quizFeedback');
+            const q = quizData[currentQuizIndex];
+            const feedback = document.getElementById('quiz-feedback');
 
-            if (selectedIndex === qData.ans) {
-                feedback.textContent = '🔥 Resposta Exata!';
+            if (index === q.ans) {
+                feedback.textContent = 'BOOM! Sistema Hackeado! 🔓';
                 feedback.style.color = '#00e5ff';
-                btnElement.style.background = 'rgba(0, 229, 255, 0.15)';
                 btnElement.style.borderColor = '#00e5ff';
-                
-                // Dispara os fogos de artifício festivos!
-                dispararFogos(false);
+                btnElement.style.background = 'rgba(0, 229, 255, 0.2)';
+                explosaoFestiva(false);
             } else {
-                feedback.textContent = '❌ Não foi dessa vez...';
+                feedback.textContent = 'Acesso Negado... ❌';
                 feedback.style.color = '#ff4444';
-                btnElement.style.background = 'rgba(255, 68, 68, 0.15)';
                 btnElement.style.borderColor = '#ff4444';
+                btnElement.style.background = 'rgba(255, 68, 68, 0.2)';
                 
-                // Mostra a correta
-                const btns = document.querySelectorAll('.quiz-options .quiz-btn');
-                btns[qData.ans].style.borderColor = '#00e5ff';
-                btns[qData.ans].style.color = '#00e5ff';
+                // Destaca a correta
+                const btns = document.querySelectorAll('.quiz-btn');
+                btns[q.ans].style.borderColor = '#00e5ff';
+                btns[q.ans].style.color = '#00e5ff';
             }
 
-            document.getElementById('nextQuizBtn').style.display = 'block';
-            
-            if (currentQuiz === quizData.length - 1) {
-                document.getElementById('nextQuizBtn').textContent = 'Finalizar Desafio!';
+            const nextBtn = document.getElementById('quiz-next-btn');
+            nextBtn.style.display = 'block';
+            if (currentQuizIndex === quizData.length - 1) {
+                nextBtn.textContent = 'Ver Relatório Final';
             }
         }
 
-        function nextQuizQuestion() {
-            if (currentQuiz < quizData.length - 1) {
-                currentQuiz++;
-                loadQuizQuestion();
+        function nextQuestion() {
+            if (currentQuizIndex < quizData.length - 1) {
+                currentQuizIndex++;
+                loadQuestion();
             } else {
-                // Tela de Conclusão do Quiz
-                document.getElementById('quizProgress').style.display = 'none';
-                document.getElementById('quizQuestion').textContent = 'Você completou o Sistema Digestório!';
-                document.getElementById('quizOptions').innerHTML = '';
-                document.getElementById('quizFeedback').textContent = 'Parabéns por chegar até aqui! 🚀';
-                document.getElementById('quizFeedback').style.color = 'var(--btn-bg)';
-                document.getElementById('nextQuizBtn').style.display = 'none';
-                dispararFogos(true); // Fogos intensos no final!
+                // Fim
+                document.getElementById('quiz-counter').textContent = 'FIM DE JOGO';
+                document.getElementById('quiz-question').textContent = 'Você domina a biologia!';
+                document.getElementById('quiz-options').innerHTML = '';
+                document.getElementById('quiz-feedback').textContent = '';
+                document.getElementById('quiz-next-btn').style.display = 'none';
+                explosaoFestiva(true);
             }
         }
 
-        // --- EFEITO FOGOS DE ARTIFÍCIO (FAÍSCAS) ---
-        function dispararFogos(intenso = false) {
-            const duration = intenso ? 5000 : 1500;
-            const animationEnd = Date.now() + duration;
-            let skew = 1;
+        // Criando as pequenas explosões de faíscas como fogos!
+        function explosaoFestiva(grandFinale = false) {
+            const duration = grandFinale ? 6000 : 1500;
+            const end = Date.now() + duration;
 
             (function frame() {
-                const timeLeft = animationEnd - Date.now();
-                const ticks = Math.max(200, 500 * (timeLeft / duration));
-                skew = Math.max(0.8, skew - 0.001);
-
-                // Configuração imitando faíscas de fogos de artifício
+                // Lança faíscas da esquerda e direita como fogos de artifício
                 confetti({
-                    particleCount: intenso ? 4 : 2,
-                    startVelocity: 0,
-                    ticks: ticks,
-                    origin: {
-                        x: Math.random(),
-                        // Faíscas caindo do topo e do meio da tela
-                        y: (Math.random() * skew) - 0.2
-                    },
-                    // Cores de fogo/faísca: Dourado, Laranja, Amarelo, Branco
-                    colors: ['#ffb300', '#ffd700', '#ffffff', '#ff8c00', '#ff4500'],
+                    particleCount: grandFinale ? 5 : 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#ff6b00', '#ffae00', '#ffffff', '#ff3300'],
                     shapes: ['circle'],
-                    gravity: 1.2,
-                    scalar: randomInRange(0.6, 1.2),
-                    drift: randomInRange(-0.5, 0.5)
+                    gravity: 1.5,
+                    scalar: 0.8,
+                    ticks: 200
+                });
+                confetti({
+                    particleCount: grandFinale ? 5 : 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#00e5ff', '#ffffff', '#0099ff'],
+                    shapes: ['circle'],
+                    gravity: 1.5,
+                    scalar: 0.8,
+                    ticks: 200
                 });
 
-                if (timeLeft > 0) {
+                if (Date.now() < end) {
                     requestAnimationFrame(frame);
                 }
             }());
         }
 
-        function randomInRange(min, max) {
-            return Math.random() * (max - min) + min;
+        // Modo Noturno / Claro
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const btn = document.getElementById('theme-btn');
+            if (document.body.classList.contains('light-mode')) {
+                btn.textContent = '☀️';
+            } else {
+                btn.textContent = '🌙';
+            }
         }
 
-        // Iniciar
-        window.onload = initSlides;
+        // Dá o play
+        window.onload = initApp;
     </script>
 </body>
 </html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hackeando o Sistema Digestório - edhumanas</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #121214;
+            --text-color: #ffffff;
+            --panel-bg: rgba(30, 30, 32, 0.95);
+            --btn-bg: #ff6b00; /* Laranja vibrante combinando com as imagens */
+            --btn-text: #ffffff;
+            --btn-hover: #ff8533;
+            --accent: #00e5ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container de Slides */
+        #slider-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            transition: opacity 0.5s;
+            background-color: #000; /* Fundo preto para destacar as bordas das imagens */
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            background-size: contain; /* Garante que a imagem inteira apareça sem cortar */
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: opacity 0.6s ease-in-out;
+        }
+
+        .slide.active {
+            opacity: 1;
+        }
+
+        /* Container do Quiz */
+        #quiz-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #2a2a2e 0%, #121214 100%);
+        }
+
+        .quiz-panel {
+            background: var(--panel-bg);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 24px;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            text-align: center;
+            transform: translateY(20px);
+            animation: slideUp 0.6s forwards ease-out;
+        }
+
+        @keyframes slideUp {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .quiz-panel h2 {
+            font-family: 'Fredoka', sans-serif;
+            font-size: 2.5rem;
+            color: var(--btn-bg);
+            margin-bottom: 0.5rem;
+        }
+
+        .quiz-progress {
+            font-size: 1.1rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+        }
+
+        .quiz-question {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            line-height: 1.4;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .quiz-btn {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.15);
+            color: var(--text-color);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            padding-left: 24px;
+        }
+
+        .quiz-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--btn-bg);
+            transform: translateX(8px);
+        }
+
+        .quiz-feedback {
+            margin-top: 1.5rem;
+            font-weight: bold;
+            font-size: 1.4rem;
+            min-height: 35px;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* Controles Inferiores */
+        #nav-ui {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            pointer-events: none; /* Para não bloquear cliques na imagem */
+        }
+
+        .nav-btn {
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: var(--btn-hover);
+            transform: scale(1.1);
+        }
+
+        .nav-btn:disabled {
+            background: #444;
+            color: #777;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-pill {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .logo-top {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            z-index: 10;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-shadow: 0 2px 10px rgba(0,229,255,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo-top">edhumanas</div>
+
+    <div id="slider-container"></div>
+
+    <div id="quiz-container">
+        <div class="quiz-panel">
+            <h2>Desafio Final!</h2>
+            <div class="quiz-progress" id="quizProgress">Pergunta 1 de 10</div>
+            <div class="quiz-question" id="quizQuestion">Carregando...</div>
+            <div class="quiz-options" id="quizOptions"></div>
+            <div class="quiz-feedback" id="quizFeedback"></div>
+            
+            <button id="nextQuizBtn" class="nav-btn" style="margin: 20px auto 0; width: auto; padding: 0 30px; border-radius: 30px; font-size: 1.2rem; display: none;" onclick="nextQuizQuestion()">Próxima Pergunta ❯</button>
+        </div>
+    </div>
+
+    <div id="nav-ui">
+        <button class="nav-btn" id="prevBtn" onclick="prevSlide()">❮</button>
+        <div class="progress-pill" id="slideProgressText">Iniciando...</div>
+        <button class="nav-btn" id="nextBtn" onclick="nextSlide()">❯</button>
+    </div>
+
+    <script>
+        // Array com as 15 imagens do seu projeto
+        const images = [
+            '01.jpg', '02.jpg', '03.jpg', '04.jpg', '05.jpg', 
+            '06.jpg', '07.jpg', '08.jpg', '09.jpg', '10.jpg',
+            '11.jpg', '12.jpg', '13.jpg', '14.jpg', '15.jpg'
+        ];
+
+        // As 10 perguntas extraídas do seu material em texto
+        const quizData = [
+            { q: 'Onde começa a digestão química dos carboidratos?', options: ['No estômago', 'Na boca', 'No intestino delgado', 'No esôfago'], ans: 1 },
+            { q: 'Qual movimento empurra o alimento pelo esôfago?', options: ['Movimentos de rotação', 'Gravidade', 'Movimentos peristálticos', 'Contrações gástricas'], ans: 2 },
+            { q: 'Qual ácido compõe o suco gástrico para digerir proteínas?', options: ['Ácido clorídrico', 'Ácido sulfúrico', 'Ácido cítrico', 'Ácido lático'], ans: 0 },
+            { q: 'Onde ocorre a maior parte da absorção de nutrientes da nossa alimentação?', options: ['Intestino grosso', 'Estômago', 'Fígado', 'Intestino delgado'], ans: 3 },
+            { q: 'Qual órgão produz a bile?', options: ['Fígado', 'Vesícula Biliar', 'Pâncreas', 'Estômago'], ans: 0 },
+            { q: 'A bile atua como um detergente natural. Qual sua função principal?', options: ['Digerir proteínas', 'Emulsificar gorduras', 'Absorver água', 'Produzir insulina'], ans: 1 },
+            { q: 'Qual órgão produz insulina e suco pancreático?', options: ['Fígado', 'Intestino delgado', 'Pâncreas', 'Vesícula biliar'], ans: 2 },
+            { q: 'Onde ocorre a reabsorção de água e formação das fezes?', options: ['Intestino grosso', 'Intestino delgado', 'Reto', 'Estômago'], ans: 0 },
+            { q: 'Qual o nome da massa alimentar após passar pelo estômago?', options: ['Bolo alimentar', 'Quimo', 'Quilo', 'Suco gástrico'], ans: 1 },
+            { q: 'Qual estrutura impede o refluxo de substâncias do estômago para o esôfago?', options: ['Cárdia', 'Piloro', 'Epiglote', 'Faringe'], ans: 0 }
+        ];
+
+        let currentSlide = 0;
+        let currentQuiz = 0;
+        let inQuizMode = false;
+        let quizAnswered = false;
+
+        // Inicializa o Slider injetando as 15 imagens
+        function initSlides() {
+            const container = document.getElementById('slider-container');
+            images.forEach((img, index) => {
+                const div = document.createElement('div');
+                div.className = `slide ${index === 0 ? 'active' : ''}`;
+                div.style.backgroundImage = `url('${img}')`;
+                container.appendChild(div);
+            });
+            updateSlideUI();
+        }
+
+        // Atualiza a interface dos slides
+        function updateSlideUI() {
+            document.querySelectorAll('.slide').forEach((el, index) => {
+                el.classList.toggle('active', index === currentSlide);
+            });
+
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            
+            const progress = document.getElementById('slideProgressText');
+            if (currentSlide < images.length) {
+                progress.textContent = `Nível ${currentSlide + 1} de ${images.length}`;
+                
+                // Muda o ícone do botão "Próximo" no último slide para indicar o Quiz
+                if(currentSlide === images.length - 1) {
+                    document.getElementById('nextBtn').innerHTML = '🎮';
+                    document.getElementById('nextBtn').title = 'Iniciar Quiz';
+                } else {
+                    document.getElementById('nextBtn').innerHTML = '❯';
+                    document.getElementById('nextBtn').title = 'Próximo';
+                }
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < images.length - 1) {
+                currentSlide++;
+                updateSlideUI();
+            } else {
+                startQuiz();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlideUI();
+            }
+        }
+
+        // --- LÓGICA DO QUIZ ---
+        function startQuiz() {
+            inQuizMode = true;
+            document.getElementById('slider-container').style.opacity = '0';
+            document.getElementById('nav-ui').style.display = 'none';
+            
+            setTimeout(() => {
+                document.getElementById('slider-container').style.display = 'none';
+                document.getElementById('quiz-container').style.display = 'flex';
+                loadQuizQuestion();
+            }, 500);
+        }
+
+        function loadQuizQuestion() {
+            quizAnswered = false;
+            const qData = quizData[currentQuiz];
+            
+            document.getElementById('quizProgress').textContent = `Pergunta ${currentQuiz + 1} de ${quizData.length}`;
+            document.getElementById('quizQuestion').textContent = qData.q;
+            document.getElementById('quizFeedback').textContent = '';
+            document.getElementById('nextQuizBtn').style.display = 'none';
+            
+            const optionsDiv = document.getElementById('quizOptions');
+            optionsDiv.innerHTML = '';
+            
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-btn';
+                btn.textContent = `${['A', 'B', 'C', 'D'][index]}) ${opt}`;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+
+            const qData = quizData[currentQuiz];
+            const feedback = document.getElementById('quizFeedback');
+
+            if (selectedIndex === qData.ans) {
+                feedback.textContent = '🔥 Resposta Exata!';
+                feedback.style.color = '#00e5ff';
+                btnElement.style.background = 'rgba(0, 229, 255, 0.15)';
+                btnElement.style.borderColor = '#00e5ff';
+                
+                // Dispara os fogos de artifício festivos!
+                dispararFogos(false);
+            } else {
+                feedback.textContent = '❌ Não foi dessa vez...';
+                feedback.style.color = '#ff4444';
+                btnElement.style.background = 'rgba(255, 68, 68, 0.15)';
+                btnElement.style.borderColor = '#ff4444';
+                
+                // Mostra a correta
+                const btns = document.querySelectorAll('.quiz-options .quiz-btn');
+                btns[qData.ans].style.borderColor = '#00e5ff';
+                btns[qData.ans].style.color = '#00e5ff';
+            }
+
+            document.getElementById('nextQuizBtn').style.display = 'block';
+            
+            if (currentQuiz === quizData.length - 1) {
+                document.getElementById('nextQuizBtn').textContent = 'Finalizar Desafio!';
+            }
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuiz < quizData.length - 1) {
+                currentQuiz++;
+                loadQuizQuestion();
+            } else {
+                // Tela de Conclusão do Quiz
+                document.getElementById('quizProgress').style.display = 'none';
+                document.getElementById('quizQuestion').textContent = 'Você completou o Sistema Digestório!';
+                document.getElementById('quizOptions').innerHTML = '';
+                document.getElementById('quizFeedback').textContent = 'Parabéns por chegar até aqui! 🚀';
+                document.getElementById('quizFeedback').style.color = 'var(--btn-bg)';
+                document.getElementById('nextQuizBtn').style.display = 'none';
+                dispararFogos(true); // Fogos intensos no final!
+            }
+        }
+
+        // --- EFEITO FOGOS DE ARTIFÍCIO (FAÍSCAS) ---
+        function dispararFogos(intenso = false) {
+            const duration = intenso ? 5000 : 1500;
+            const animationEnd = Date.now() + duration;
+            let skew = 1;
+
+            (function frame() {
+                const timeLeft = animationEnd - Date.now();
+                const ticks = Math.max(200, 500 * (timeLeft / duration));
+                skew = Math.max(0.8, skew - 0.001);
+
+                // Configuração imitando faíscas de fogos de artifício
+                confetti({
+                    particleCount: intenso ? 4 : 2,
+                    startVelocity: 0,
+                    ticks: ticks,
+                    origin: {
+                        x: Math.random(),
+                        // Faíscas caindo do topo e do meio da tela
+                        y: (Math.random() * skew) - 0.2
+                    },
+                    // Cores de fogo/faísca: Dourado, Laranja, Amarelo, Branco
+                    colors: ['#ffb300', '#ffd700', '#ffffff', '#ff8c00', '#ff4500'],
+                    shapes: ['circle'],
+                    gravity: 1.2,
+                    scalar: randomInRange(0.6, 1.2),
+                    drift: randomInRange(-0.5, 0.5)
+                });
+
+                if (timeLeft > 0) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        // Iniciar
+        window.onload = initSlides;
+    </script>
+</body>
+</html>
